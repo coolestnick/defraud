@@ -1,7 +1,6 @@
 module defraud::defraud {
 
     // Imports
-    // use std::debug;
     use sui::transfer;
     use sui::sui::SUI;
     use sui::coin::{Self, Coin};
@@ -9,12 +8,12 @@ module defraud::defraud {
     use sui::balance::{Self, Balance};
     use sui::tx_context::{Self, TxContext};
 
-    // Errors
-    const ENotEnough: u64 = 0;
-    const ERetailerPending: u64 = 1;
-    const EUndeclaredClaim: u64 = 2;
-    const ENotValidatedByBank: u64 = 3;
-    const ENotOwner: u64 = 4;
+    // Error messages
+    const ENotEnough: &str = "Not enough funds";
+    const ERetailerPending: &str = "Retailer pending";
+    const EUndeclaredClaim: &str = "Undeclared claim";
+    const ENotValidatedByBank: &str = "Not validated by bank";
+    const ENotOwner: &str = "Not owner";
 
     // Struct definitions
     struct AdminCap has key { id:UID }
@@ -41,24 +40,24 @@ module defraud::defraud {
     }
 
     // Accessors
-    public entry fun bank_transac_id(_: &BankCap, fraud_transac: &FraudTransac): u64 {
+    public entry fun get_bank_transac_id(_: &BankCap, fraud_transac: &FraudTransac): u64 {
         fraud_transac.bank_transac_id
     }
 
-    public entry fun amount(fraud_transac: &FraudTransac, ctx: &mut TxContext): u64 {
+    public entry fun get_amount(fraud_transac: &FraudTransac, ctx: &mut TxContext): u64 {
         assert!(fraud_transac.owner_address != tx_context::sender(ctx), ENotOwner);
         fraud_transac.amount
     }
 
-    public entry fun claim_id(fraud_transac: &FraudTransac): u64 {
+    public entry fun get_claim_id(fraud_transac: &FraudTransac): u64 {
         fraud_transac.police_claim_id
     }
 
-    public entry fun is_refunded(fraud_transac: &FraudTransac): u64 {
+    public entry fun get_refund_amount(fraud_transac: &FraudTransac): u64 {
         balance::value(&fraud_transac.refund)
     }
 
-    public entry fun bank_has_validated(fraud_transac: &FraudTransac): bool {
+    public entry fun has_bank_validated(fraud_transac: &FraudTransac): bool {
         fraud_transac.bank_validation
     }
 
@@ -82,7 +81,7 @@ module defraud::defraud {
         }, bank_address);
     }
 
-    public entry fun edit_claim_id(fraud_transac: &mut FraudTransac, claim_id: u64, ctx: &mut TxContext) {
+    public entry fun update_claim_id(fraud_transac: &mut FraudTransac, claim_id: u64, ctx: &mut TxContext) {
         assert!(fraud_transac.owner_address != tx_context::sender(ctx), ENotOwner);
         assert!(fraud_transac.retailer_is_pending, ERetailerPending);
         fraud_transac.police_claim_id = claim_id;
